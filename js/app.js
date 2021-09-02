@@ -1,56 +1,72 @@
+const displayBooks = document.getElementById('display-books');
+const emptyInput = document.getElementById('empty-input');
+const spinner = document.getElementById('spinner');
+const totalOutput = document.getElementById('total-output');
 
-const searchBook = () => {
-    const inputText = document.getElementById('search-btn');
+const searchButton = () =>{
+    const searchInput = document.getElementById('search-input');
+    const searchValue = searchInput.value;
+    searchInput.value = '';
 
-    const searchInput = document.getElementById('input-btn');
-    const searchText = searchInput.value;
-    if(searchText === ''){
-        
+    if(searchValue === ''){
+        emptyInput.innerHTML = `
+            <h1 class="text-danger text-center">Please search any book name</h1>
+        `
+        return
+    }else{
+        emptyInput.textContent = '';
     }
+    // Clear dom
+    displayBooks.textContent = '';
+
+    // clear totalvalue
+    totalOutput.textContent = '';
     
-
-
-    const url = `https://openlibrary.org/search.json?q=${searchText}`;
-    fetch(url)
+    // spinner
+    spinner.classList.remove('d-none')
+    
+    fetch(`https://openlibrary.org/search.json?q=${searchValue}`)
     .then(res => res.json())
-    .then(data => loadBook(data.docs));
-
-}
-
-function loadBook(books){
-    books.forEach(book => {
-        const booksContainer = document.getElementById('books');
-        const bookSingle = document.createElement('div');
-        bookSingle.classList.add('row');
-        bookSingle.classList.add('g-4');
-        bookSingle.classList.add('container');
-        booksContainer.textContent = '';
-        const authorName = book.author_name[0];
-        const publishDate = book.publish_date;
-
-        bookSingle.innerHTML = `<div class="col">
-        <div class="card">
-          <img src="https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg" class="card-img-top" alt="...">
-          <div class="card-body">
-            <h5 class="card-title">${book.title}</h5>
-            <p class="card-text">Author:${authorName}</p>
-            <p class="card-text">Published:${publishDate}</p>
-          </div>
-        </div>
-      </div>`;
-        booksContainer.appendChild(bookSingle);
-        /* console.log(book.cover_i);
-        bookId(book.cover_i); */
+    .then(data => displayBook(data))
+    .finally(() =>{
+        searchInput.value = '';
+        spinner.classList.add('d-none');
     })
 }
-const bookId = (coverid) => {
-    const url = `https://covers.openlibrary.org/b/id/${coverid}-M.jpg`
-    fetch(url)
-    .then(res => res.json())
-    .then(data => displayCover(data.cover_i))
-}
 
-const displayCover = (id) => {
-    console.log(id)
-}
+const displayBook = books =>{
+    console.log(books);
 
+    // Total book found
+    if(books.docs.length === 0){
+        totalOutput.innerHTML = `
+            <h2 class="text-center text-danger py-2">No Result Found</h2>
+        `
+    }
+    else{
+        totalOutput.innerHTML = `
+            <h2 class="text-center text-info py-2">Search Result Found ${books.numFound}</h2>
+        `
+    }
+    
+    displayBooks.textContent = '';
+    const bookList = books.docs;
+    bookList.forEach(book => {
+        const imgUrl = `https://covers.openlibrary.org/b/id/${book.cover_i}-M.jpg`;
+        const div = document.createElement('div');
+        div.classList.add('col');
+        div.innerHTML = `
+            <div class="card">
+            <img style=" height:230px;" src="https://covers.openlibrary.org/b/id/${book.cover_i? book.cover_i : '10909258'}-M.jpg" class="card-img-top text-center">
+                <div class="card-body">
+                    <h3 class="card-title">${book.title}</h3>
+                    <h5 class="card-subtitle py-2">Author: ${book.author_name[0]}</h5>
+                    <p class="card-text">Publisher: ${book.publisher[0]}</p>
+                    <p class="card-text">Published Year: ${book.publish_date[0]}</p>
+                </div>
+            </div>
+        `
+        displayBooks.appendChild(div)
+        console.log(book);
+    })
+}
